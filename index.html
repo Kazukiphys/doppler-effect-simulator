@@ -1,0 +1,1020 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f2eb">
+  <title>ドップラー効果 | 波の見える実験室</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f3f2eb;
+      --ink: #202925;
+      --muted: #68736d;
+      --line: #d9ddd4;
+      --green: #315e4b;
+      --lime: #c9ed74;
+      --orange: #f1835b;
+      --stage: #182a27;
+      --wave: #72d9c0;
+      --serif: "Yu Mincho", "Hiragino Mincho ProN", Georgia, serif;
+      --sans: "Yu Gothic", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background-color: var(--paper);
+      background-image: radial-gradient(#315e4b12 0.8px, transparent 0.8px);
+      background-size: 18px 18px;
+      font-family: var(--sans);
+    }
+    button, input { font: inherit; }
+    .shell { max-width: 1440px; margin: auto; padding: 30px clamp(18px, 4vw, 58px) 40px; }
+    header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 34px; }
+    .brand { display: flex; gap: 13px; align-items: center; }
+    .brand-mark {
+      width: 42px; height: 42px; display: grid; place-items: center;
+      color: var(--lime); background: var(--green); border-radius: 50%;
+      font: 18px var(--serif); letter-spacing: 0;
+    }
+    .brand-name { font-size: 13px; font-weight: 700; letter-spacing: .08em; }
+    .brand-caption { margin-top: 4px; color: var(--muted); font-size: 10px; letter-spacing: .14em; }
+    .signature { margin: 6px 0 0; color: var(--green); font: italic 16px Georgia, serif; }
+    .intro { margin-bottom: 28px; }
+    .eyebrow { color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: .18em; }
+    h1 { margin: 7px 0 8px; font: 400 clamp(27px, 3vw, 38px)/1.3 var(--serif); letter-spacing: 0; }
+    .intro p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.8; }
+    .tabs { display: flex; border-bottom: 1px solid var(--line); gap: 28px; }
+    .tab {
+      position: relative; border: 0; padding: 13px 1px 14px; color: #818a83;
+      background: transparent; cursor: pointer; font-size: 13px; font-weight: 600;
+    }
+    .tab[aria-selected="true"] { color: var(--green); }
+    .tab[aria-selected="true"]::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 3px; background: var(--green); content: ""; }
+    .tab:focus-visible, button:focus-visible, input:focus-visible { outline: 3px solid #f1835b88; outline-offset: 3px; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 28px; padding-top: 22px; }
+    .visual-column { min-width: 0; }
+    .stage-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+    .stage-heading h2 { margin: 0; font-size: 13px; font-weight: 700; }
+    .live-label { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 3px #f1835b25; }
+    .stage {
+      position: relative; height: clamp(310px, 39vw, 440px); overflow: hidden;
+      border-radius: 4px; background: var(--stage); box-shadow: 0 12px 28px #20312b1c;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+    .stage-legend {
+      position: absolute; top: 17px; left: 19px; display: flex; gap: 17px;
+      color: #d4e1d9; font-size: 10px; letter-spacing: .03em;
+    }
+    .legend-item { display: flex; align-items: center; gap: 7px; }
+    .legend-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); }
+    .legend-ring { width: 12px; height: 12px; border: 1px solid var(--wave); border-radius: 50%; }
+    .legend-person { color: #ffffff; font-size: 13px; line-height: 1; }
+    .stage-note { position: absolute; right: 19px; bottom: 17px; color: #a6bbb0; font-size: 10px; }
+    .observer-counter { position: absolute; top: 15px; right: 18px; display: grid; gap: 3px; color: #c4d8cd; font-size: 10px; text-align: right; }
+    .observer-counter strong { color: var(--lime); font-size: 16px; font-variant-numeric: tabular-nums; }
+    .slow-motion-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: #fffdf7; cursor: pointer; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .slow-motion-toggle input { width: 14px; height: 14px; margin: 0; accent-color: var(--green); }
+    .observer-controls .simulation-actions, .light-controls .simulation-actions { align-items: center; }
+    .observer-clock { position: relative; width: 38px; height: 38px; margin: 5px 0 0 auto; border: 1px solid #c4d8cd; border-radius: 50%; }
+    .observer-clock::before { position: absolute; top: 3px; left: 50%; width: 1px; height: 4px; background: #c4d8cd; transform: translateX(-50%); content: ""; }
+    .clock-hand { position: absolute; bottom: 50%; left: calc(50% - .5px); width: 1px; height: 13px; background: #ffffff; transform-origin: 50% 100%; animation: one-second 1s linear infinite; }
+    .clock-pivot { position: absolute; top: calc(50% - 2px); left: calc(50% - 2px); width: 4px; height: 4px; border-radius: 50%; background: var(--lime); }
+    @keyframes one-second { to { transform: rotate(1turn); } }
+    .light-readout { position: absolute; top: 15px; right: 18px; display: grid; justify-items: end; gap: 4px; color: #d4e1d9; font-size: 10px; }
+    .light-readout strong { font-size: 17px; font-variant-numeric: tabular-nums; }
+    .light-color-swatch { width: 28px; height: 10px; border: 1px solid #ffffff80; border-radius: 2px; }
+    .light-source-symbol { width: 9px; height: 9px; border: 1px solid #fff; border-radius: 50%; background: #fff; box-shadow: 0 0 8px #fff; }
+    .light-wave-symbol { width: 14px; height: 2px; background: #fff; box-shadow: 0 0 7px #fff; }
+    .direction.toward-earth .direction-line::after { right: auto; left: 0; transform: rotate(180deg); }
+    .stage-controls { display: flex; align-items: center; justify-content: space-between; padding-top: 13px; }
+    .play-button {
+      display: inline-flex; align-items: center; gap: 9px; min-width: 106px; padding: 9px 13px;
+      border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: #fffdf7;
+      cursor: pointer; font-size: 12px; font-weight: 600;
+    }
+    .play-button:hover { border-color: var(--green); }
+    .simulation-actions { display: flex; gap: 8px; }
+    .reset-button { min-width: auto; }
+    .play-icon { width: 15px; color: var(--green); font-size: 12px; }
+    .direction { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 11px; }
+    .direction-line { width: 56px; height: 1px; background: var(--orange); position: relative; }
+    .direction-line::after { position: absolute; right: 0; top: -3px; border-top: 3px solid transparent; border-bottom: 3px solid transparent; border-left: 5px solid var(--orange); content: ""; }
+    .side-panel { border-left: 1px solid var(--line); padding-left: 24px; }
+    .side-panel h2 { margin: 0 0 20px; font-size: 13px; }
+    .control { margin-bottom: 23px; }
+    .control-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 11px; }
+    .control label { font-size: 12px; font-weight: 600; }
+    .control output { color: var(--green); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    input[type="range"] { display: block; width: 100%; height: 4px; appearance: none; background: #d5dbd1; accent-color: var(--green); cursor: pointer; }
+    input[type="range"]::-webkit-slider-thumb { width: 15px; height: 15px; appearance: none; border: 2px solid var(--paper); border-radius: 50%; background: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; border: 2px solid var(--paper); border-radius: 50%; background: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    .range-ends { display: flex; justify-content: space-between; margin-top: 7px; color: #89928b; font-size: 10px; }
+    .range-note { margin-top: 4px; color: #7b857e; font-size: 10px; text-align: right; }
+    .speed-entry { display: grid; grid-template-columns: minmax(0, 1fr) 76px auto; gap: 8px; align-items: center; margin-top: 13px; }
+    .speed-entry label, .speed-unit { color: var(--muted); font-size: 11px; }
+    .speed-entry input { width: 76px; padding: 6px 7px; border: 1px solid var(--line); border-radius: 3px; color: var(--ink); background: #fffdf7; text-align: right; font-size: 12px; }
+    .direction.toward-source .direction-line::after { right: auto; left: 0; transform: rotate(180deg); }
+    .formula-box { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--line); }
+    .formula-title { margin-bottom: 13px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+    .formula { display: grid; grid-template-columns: 74px minmax(0, 1fr); column-gap: 4px; row-gap: 5px; align-items: baseline; margin: 0 0 12px; font: 16px "Cambria Math", "STIX Two Math", "Times New Roman", serif; letter-spacing: 0; }
+    .formula small { grid-column: 1; grid-row: 1 / span 2; color: var(--muted); font: 11px var(--sans); }
+    .equation { grid-column: 2; grid-row: 1; font-size: 16px; }
+    .value { grid-column: 2; grid-row: 2; justify-self: end; color: var(--green); font: 600 13px var(--sans); font-variant-numeric: tabular-nums; }
+    .formula-note { margin: 13px 0 0; color: #7b857e; font-size: 10px; line-height: 1.7; }
+    .formula-note math { font-size: 1em; vertical-align: middle; }
+    .coming-soon { display: none; min-height: 430px; place-items: center; text-align: center; }
+    .coming-soon.visible { display: grid; }
+    .coming-inner { max-width: 380px; }
+    .coming-symbol { width: 60px; height: 60px; display: grid; place-items: center; margin: 0 auto 17px; border: 1px solid var(--line); border-radius: 50%; color: var(--green); font: 27px var(--serif); }
+    .coming-inner h2 { margin: 0 0 8px; font: 24px var(--serif); }
+    .coming-inner p { color: var(--muted); font-size: 13px; line-height: 1.8; }
+    [hidden] { display: none !important; }
+    @media (max-width: 760px) {
+      .shell { padding-top: 22px; }
+      header { margin-bottom: 27px; }
+      .workspace { grid-template-columns: 1fr; gap: 25px; }
+      .stage { height: clamp(270px, 65vw, 380px); }
+      .side-panel { border-top: 1px solid var(--line); border-left: 0; padding: 20px 0 0; }
+      .side-panel h2 { margin-bottom: 16px; }
+      .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
+      .formula-box { margin-top: 6px; }
+      .tabs { gap: 20px; overflow-x: auto; }
+      .tab { white-space: nowrap; }
+    }
+    @media (max-width: 430px) {
+      .controls-grid { grid-template-columns: 1fr; }
+      .stage-legend { top: 14px; left: 13px; gap: 10px; }
+      .stage-note { right: 12px; bottom: 13px; }
+      .direction { font-size: 10px; }
+      .direction-line { width: 32px; }
+      .observer-controls { flex-wrap: wrap; }
+      .observer-controls .simulation-actions, .observer-controls .direction { flex: 1 0 100%; }
+      .observer-controls .simulation-actions { flex-wrap: wrap; }
+      .observer-controls .play-button, .light-controls .play-button { min-width: 0; padding: 8px 9px; }
+      .observer-controls .slow-motion-toggle { padding: 8px 7px; font-size: 11px; }
+      .observer-controls .direction { justify-content: flex-end; }
+      .light-controls { flex-wrap: wrap; }
+      .light-controls .simulation-actions, .light-controls .direction { flex: 1 0 100%; }
+      .light-controls .direction { justify-content: flex-end; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">波</div>
+        <div><div class="brand-name">波の見える実験室</div><div class="brand-caption">PHYSICS · SOUND & LIGHT</div></div>
+      </div>
+      <p class="signature">by K.Kitaoka</p>
+    </header>
+
+    <section class="intro" aria-labelledby="page-title">
+      <div class="eyebrow">WAVE PHENOMENA / 01</div>
+      <h1 id="page-title">ドップラー効果</h1>
+      <p>波源と観測者の相対運動で，波の届き方はどう変わる？</p>
+    </section>
+
+    <nav class="tabs" role="tablist" aria-label="ドップラー効果のモード">
+      <button class="tab" id="tab-source" role="tab" aria-selected="true" aria-controls="panel-source">音源が進む</button>
+      <button class="tab" id="tab-observer" role="tab" aria-selected="false" aria-controls="panel-observer" tabindex="-1">観測者が進む</button>
+      <button class="tab" id="tab-light" role="tab" aria-selected="false" aria-controls="panel-light" tabindex="-1">光のドップラー効果</button>
+    </nav>
+
+    <section id="panel-source" role="tabpanel" aria-labelledby="tab-source">
+      <div class="workspace">
+        <section class="visual-column" aria-labelledby="visual-title">
+          <div class="stage-heading">
+            <h2 id="visual-title">波面の広がり</h2>
+            <div class="live-label"><span class="live-dot" aria-hidden="true"></span><span id="motion-status">波源が移動中</span></div>
+          </div>
+          <div class="stage">
+            <canvas id="wave-canvas" role="img" aria-label="右へ移動する波源から広がる円形の音波。前方の波面は狭く，後方の波面は広い。"></canvas>
+            <div class="stage-legend" aria-hidden="true">
+              <span class="legend-item"><span class="legend-dot"></span>波源</span>
+              <span class="legend-item"><span class="legend-ring"></span>波面</span>
+            </div>
+            <div class="stage-note" id="stage-note">円は同じ時間間隔で出た波面</div>
+          </div>
+          <div class="stage-controls">
+            <div class="simulation-actions">
+              <button class="play-button" id="toggle-motion" type="button" aria-pressed="true"><span class="play-icon" aria-hidden="true">Ⅱ</span><span>一時停止</span></button>
+              <button class="play-button reset-button" id="reset-motion" type="button" title="初期状態に戻す"><span class="play-icon" aria-hidden="true">↺</span><span>リセット</span></button>
+            </div>
+            <div class="direction"><span>波源の進行方向</span><span class="direction-line" aria-hidden="true"></span><span>右</span></div>
+          </div>
+        </section>
+
+        <aside class="side-panel" aria-labelledby="settings-title">
+          <h2 id="settings-title">条件を変える</h2>
+          <div class="controls-grid">
+            <div class="control">
+              <div class="control-head"><label for="speed">波源の速さ</label><output id="speed-ratio-output" for="speed">音速の35%</output></div>
+              <input id="speed" type="range" min="0" max="510" step="1" value="119" aria-label="波源の速さ（メートル毎秒）">
+              <div class="range-ends"><span>0 m/s</span><span>最大 <span id="speed-max-output">510 m/s</span></span></div>
+              <div class="range-note">音速 c = <span id="sound-speed-output">340 m/s</span>・上限は音速の <span id="speed-max-percent">150%</span></div>
+              <div class="speed-entry"><label for="speed-number">速さを数値で入力</label><input id="speed-number" type="number" min="0" max="510" step="1" value="119" inputmode="numeric"><span class="speed-unit">m/s</span></div>
+            </div>
+            <div class="control">
+              <div class="control-head"><label for="frequency">音源の振動数</label><output id="frequency-output" for="frequency">2.0 Hz</output></div>
+              <input id="frequency" type="range" min="1" max="5" step="0.5" value="2">
+              <div class="range-ends"><span>1 Hz</span><span>5 Hz</span></div>
+            </div>
+          </div>
+          <div class="formula-box" aria-live="polite">
+            <div class="formula-title">波長の変化</div>
+            <p class="formula"><small>進行方向</small><math class="equation" display="inline" aria-label="ラムダ前は，かっこ c マイナス v s かっことじるを f で割る"><msub><mi mathvariant="italic">λ</mi><mi>前</mi></msub><mo>=</mo><mfrac><mrow><mi mathvariant="italic">c</mi><mo>−</mo><msub><mi mathvariant="italic">v</mi><mi mathvariant="italic">s</mi></msub></mrow><mi mathvariant="italic">f</mi></mfrac></math><span class="value" id="front-value">88 m</span></p>
+            <p class="formula"><small>後ろ方向</small><math class="equation" display="inline" aria-label="ラムダ後は，かっこ c プラス v s かっことじるを f で割る"><msub><mi mathvariant="italic">λ</mi><mi>後</mi></msub><mo>=</mo><mfrac><mrow><mi mathvariant="italic">c</mi><mo>+</mo><msub><mi mathvariant="italic">v</mi><mi mathvariant="italic">s</mi></msub></mrow><mi mathvariant="italic">f</mi></mfrac></math><span class="value" id="rear-value">184 m</span></p>
+            <p class="formula-note" id="formula-note">音速 c = 340 m/s。波源に近い側では波面が詰まり，遠ざかる側では広がります。</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+    <section id="panel-observer" role="tabpanel" aria-labelledby="tab-observer" hidden>
+      <div class="workspace">
+        <section class="visual-column" aria-labelledby="observer-visual-title">
+          <div class="stage-heading">
+            <h2 id="observer-visual-title">波と観測者</h2>
+            <div class="live-label"><span class="live-dot" aria-hidden="true"></span><span>波源は静止</span></div>
+          </div>
+          <div class="stage">
+            <canvas id="observer-canvas" role="img" aria-label="左側の静止したスピーカーから右向きに伝わる正弦波と，波源へ近づく棒人間の観測者"></canvas>
+            <div class="stage-legend" aria-hidden="true">
+              <span class="legend-item"><span class="legend-dot"></span>スピーカー（静止）</span>
+              <span class="legend-item"><span class="legend-person" aria-hidden="true">人</span>観測者（移動）</span>
+            </div>
+            <div class="observer-counter" aria-live="polite"><span>1秒あたりに受け取る波</span><strong id="observer-count">0.0 個</strong><div class="observer-clock" role="img" aria-label="1秒で1周する時計"><span class="clock-hand"></span><span class="clock-pivot"></span></div></div>
+          </div>
+          <div class="stage-controls observer-controls">
+            <div class="simulation-actions">
+              <button class="play-button reset-button" id="observer-reset" type="button" title="観測者を初期位置に戻す"><span class="play-icon" aria-hidden="true">↺</span><span>リセット</span></button>
+              <button class="play-button" id="observer-toggle" type="button" aria-pressed="true"><span class="play-icon" aria-hidden="true">Ⅱ</span><span>一時停止</span></button>
+              <label class="slow-motion-toggle" for="observer-slow-motion"><input id="observer-slow-motion" type="checkbox"><span>スローモーション</span></label>
+            </div>
+            <div class="direction toward-source"><span>観測者の進行方向</span><span>波源</span><span class="direction-line" aria-hidden="true"></span></div>
+          </div>
+        </section>
+        <aside class="side-panel" aria-labelledby="observer-settings-title">
+          <h2 id="observer-settings-title">条件を変える</h2>
+          <div class="controls-grid">
+            <div class="control">
+              <div class="control-head"><label for="observer-speed">観測者の速さ</label><output id="observer-speed-ratio">音速の35%</output></div>
+              <input id="observer-speed" type="range" min="0" max="272" step="1" value="119" aria-label="観測者の速さ（メートル毎秒）">
+              <div class="range-ends"><span>0 m/s</span><span>最大 272 m/s</span></div>
+              <div class="range-note">波源へ近づく向き・音速の80%まで</div>
+              <div class="speed-entry"><label for="observer-speed-number">速さを数値で入力</label><input id="observer-speed-number" type="number" min="0" max="272" step="1" value="119" inputmode="numeric"><span class="speed-unit">m/s</span></div>
+            </div>
+            <div class="control">
+              <div class="control-head"><label for="observer-frequency">音源の振動数</label><output id="observer-frequency-output">2.0 Hz</output></div>
+              <input id="observer-frequency" type="range" min="1" max="5" step="0.5" value="2">
+              <div class="range-ends"><span>1 Hz</span><span>5 Hz</span></div>
+            </div>
+          </div>
+          <div class="formula-box" aria-live="polite">
+            <div class="formula-title">1秒間に受け取る波の数</div>
+            <p class="formula"><small>観測振動数</small><math class="equation" display="inline" aria-label="エフプライムはエフかける，かっこシーたすブイオーかっことじる割るシー"><msup><mi mathvariant="italic">f</mi><mo>′</mo></msup><mo>=</mo><mi mathvariant="italic">f</mi><mfrac><mrow><mi mathvariant="italic">c</mi><mo>+</mo><msub><mi mathvariant="italic">v</mi><mi mathvariant="italic">o</mi></msub></mrow><mi mathvariant="italic">c</mi></mfrac></math><span class="value" id="observer-rate">2.7 Hz</span></p>
+            <p class="formula-note">観測者が波源へ進むと，波の山に向かって進むため，静止時より多くの波を受け取ります。</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+    <section id="panel-light" role="tabpanel" aria-labelledby="tab-light" hidden>
+      <div class="workspace">
+        <section class="visual-column" aria-labelledby="light-visual-title">
+          <div class="stage-heading">
+            <h2 id="light-visual-title">恒星から地球へ届く光</h2>
+            <div class="live-label"><span class="live-dot" aria-hidden="true"></span><span id="light-motion-label">恒星は静止</span></div>
+          </div>
+          <div class="stage">
+            <canvas id="light-canvas" role="img" aria-label="右側の恒星から左側の地球へ進む光の正弦波"></canvas>
+            <div class="stage-legend" aria-hidden="true">
+              <span class="legend-item"><span class="light-source-symbol"></span>恒星</span>
+              <span class="legend-item"><span class="light-wave-symbol"></span>光の波</span>
+            </div>
+            <div class="light-readout" aria-live="polite"><span id="light-shift-label">静止・白色</span><strong id="light-wavelength">550 nm</strong><span class="light-color-swatch" id="light-color-swatch" aria-hidden="true"></span></div>
+          </div>
+          <div class="stage-controls light-controls">
+            <div class="simulation-actions">
+              <button class="play-button reset-button" id="light-reset" type="button" title="恒星の速度を0に戻す"><span class="play-icon" aria-hidden="true">↺</span><span>リセット</span></button>
+              <button class="play-button" id="light-toggle" type="button" aria-pressed="true"><span class="play-icon" aria-hidden="true">Ⅱ</span><span>一時停止</span></button>
+            </div>
+            <div class="direction toward-earth"><span>光の進行方向</span><span class="direction-line" aria-hidden="true"></span><span>地球</span></div>
+          </div>
+        </section>
+        <aside class="side-panel" aria-labelledby="light-settings-title">
+          <h2 id="light-settings-title">恒星の運動</h2>
+          <div class="control">
+            <div class="control-head"><label for="light-speed">恒星の速度</label><output id="light-speed-output" for="light-speed">0 km/s</output></div>
+            <input id="light-speed" type="range" min="-90000" max="90000" step="1000" value="0" aria-label="恒星の速度。負は地球へ接近，正は地球から遠ざかる">
+            <div class="range-ends"><span>−90,000 km/s</span><span>+90,000 km/s</span></div>
+            <div class="range-note">負：地球へ接近　正：地球から遠ざかる</div>
+            <div class="speed-entry"><label for="light-speed-number">速度を数値で入力</label><input id="light-speed-number" type="number" min="-90000" max="90000" step="1000" value="0" inputmode="numeric"><span class="speed-unit">km/s</span></div>
+          </div>
+          <div class="formula-box" aria-live="polite">
+            <div class="formula-title">相対論的ドップラー効果</div>
+            <p class="formula"><small>観測波長</small><math class="equation" display="inline" aria-label="ラムダ観測はラムダゼロかける平方根，かっこ1たすベータ割る1ひくベータかっことじる"><msub><mi mathvariant="italic">λ</mi><mi>obs</mi></msub><mo>=</mo><msub><mi mathvariant="italic">λ</mi><mn>0</mn></msub><msqrt><mfrac><mrow><mn>1</mn><mo>+</mo><mi mathvariant="italic">β</mi></mrow><mrow><mn>1</mn><mo>−</mo><mi mathvariant="italic">β</mi></mrow></mfrac></msqrt></math><span class="value" id="light-wavelength-formula">550 nm</span></p>
+            <p class="formula-note"><math class="inline-math" aria-label="ベータは v 割る c"><mi mathvariant="italic">β</mi><mo>=</mo><mfrac><mi mathvariant="italic">v</mi><mi mathvariant="italic">c</mi></mfrac></math>，<math class="inline-math" aria-label="c は299792キロメートル毎秒"><mi mathvariant="italic">c</mi><mo>=</mo><mn>299,792</mn><mtext> km/s</mtext></math>。白色を基準に，波長の変化を青・赤の色で表します。</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      const canvas = document.getElementById('wave-canvas');
+      const context = canvas.getContext('2d');
+      const speedInput = document.getElementById('speed');
+      const speedNumberInput = document.getElementById('speed-number');
+      const frequencyInput = document.getElementById('frequency');
+      const speedRatioOutput = document.getElementById('speed-ratio-output');
+      const speedMaxOutput = document.getElementById('speed-max-output');
+      const soundSpeedOutput = document.getElementById('sound-speed-output');
+      const speedMaxPercent = document.getElementById('speed-max-percent');
+      const frequencyOutput = document.getElementById('frequency-output');
+      const frontValue = document.getElementById('front-value');
+      const rearValue = document.getElementById('rear-value');
+      const toggleButton = document.getElementById('toggle-motion');
+      const resetButton = document.getElementById('reset-motion');
+      const status = document.getElementById('motion-status');
+      const formulaNote = document.getElementById('formula-note');
+      const stageNote = document.getElementById('stage-note');
+      const observerPanel = document.getElementById('panel-observer');
+      const observerCanvas = document.getElementById('observer-canvas');
+      const observerContext = observerCanvas.getContext('2d');
+      const observerSpeedInput = document.getElementById('observer-speed');
+      const observerSpeedNumber = document.getElementById('observer-speed-number');
+      const observerSpeedRatio = document.getElementById('observer-speed-ratio');
+      const observerFrequencyInput = document.getElementById('observer-frequency');
+      const observerFrequencyOutput = document.getElementById('observer-frequency-output');
+      const observerRateOutput = document.getElementById('observer-rate');
+      const observerCount = document.getElementById('observer-count');
+      const observerReset = document.getElementById('observer-reset');
+      const observerToggle = document.getElementById('observer-toggle');
+      const observerSlowMotion = document.getElementById('observer-slow-motion');
+      const observerClock = document.querySelector('.observer-clock');
+      const observerClockHand = document.querySelector('.observer-clock .clock-hand');
+      const lightPanel = document.getElementById('panel-light');
+      const lightCanvas = document.getElementById('light-canvas');
+      const lightContext = lightCanvas.getContext('2d');
+      const lightSpeedInput = document.getElementById('light-speed');
+      const lightSpeedNumber = document.getElementById('light-speed-number');
+      const lightSpeedOutput = document.getElementById('light-speed-output');
+      const lightShiftLabel = document.getElementById('light-shift-label');
+      const lightWavelength = document.getElementById('light-wavelength');
+      const lightWavelengthFormula = document.getElementById('light-wavelength-formula');
+      const lightColorSwatch = document.getElementById('light-color-swatch');
+      const lightMotionLabel = document.getElementById('light-motion-label');
+      const lightReset = document.getElementById('light-reset');
+      const lightToggle = document.getElementById('light-toggle');
+      const soundSpeed = 340;
+      const speedOfLight = 299792;
+      const visualWaveSpeed = 118;
+      const visualLightSpeed = 64;
+      let observerWidth = 0;
+      let observerHeight = 0;
+      let observerElapsed = 0;
+      let observerLastFrame = 0;
+      let observerLastCycle = null;
+      let observerPreviousCycle = null;
+      let observerWindowElapsed = 0;
+      let observerRunning = true;
+      let lightWidth = 0;
+      let lightHeight = 0;
+      let lightLastFrame = 0;
+      let lightRunning = true;
+      let lightStarX = null;
+      let lightCrests = [];
+      let lightSourcePhase = 0;
+      let running = true;
+      let elapsed = 0;
+      let lastFrame = 0;
+      let width = 0;
+      let height = 0;
+      let emissionAccumulator = 0;
+      let waves = [];
+
+      function updateReadouts() {
+        const sourceSpeed = Number(speedInput.value);
+        const frequency = Number(frequencyInput.value);
+        speedNumberInput.value = String(sourceSpeed);
+        speedRatioOutput.value = `音速の${(sourceSpeed / soundSpeed * 100).toFixed(1).replace(/\.0$/, '')}%`;
+        speedMaxOutput.textContent = `${Number(speedInput.max)} m/s`;
+        soundSpeedOutput.textContent = `${soundSpeed} m/s`;
+        speedMaxPercent.textContent = `${Math.round(Number(speedInput.max) / soundSpeed * 100)}%`;
+        frequencyOutput.value = `${frequency.toFixed(1).replace(/\.0$/, '')} Hz`;
+        if (sourceSpeed < soundSpeed) {
+          frontValue.textContent = `${((soundSpeed - sourceSpeed) / frequency).toFixed(1)} m`;
+          formulaNote.textContent = '音速 c = 340 m/s。波源に近い側では波面が詰まり，遠ざかる側では広がります。';
+          stageNote.textContent = '円は同じ時間間隔で出た波面';
+        } else if (sourceSpeed === soundSpeed) {
+          frontValue.textContent = '0 m';
+          formulaNote.textContent = '波源が音速と同じ速さで進むと，進行方向で波面が重なります。';
+          stageNote.textContent = '進行方向で波面が重なる';
+        } else {
+          frontValue.textContent = '前方に波面なし';
+          formulaNote.textContent = '波源が音速を超えると，前方に波面は届かず，後方に衝撃波面ができます。';
+          stageNote.textContent = '橙色の線は衝撃波面';
+        }
+        rearValue.textContent = `${((soundSpeed + sourceSpeed) / frequency).toFixed(1)} m`;
+        canvas.setAttribute('aria-label', `右へ移動する波源から広がる円形の音波。進行方向の波長は${frontValue.textContent}，後方の波長は${rearValue.textContent}。`);
+      }
+
+      function resizeCanvas() {
+        const bounds = canvas.getBoundingClientRect();
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        width = bounds.width;
+        height = bounds.height;
+        canvas.width = Math.round(width * pixelRatio);
+        canvas.height = Math.round(height * pixelRatio);
+        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        draw();
+      }
+
+      function draw() {
+        if (!width || !height) return;
+        context.clearRect(0, 0, width, height);
+        const baseline = height * 0.56;
+        const startX = width * 0.14;
+        const travel = width * 0.72;
+        const sourceSpeed = visualWaveSpeed * Number(speedInput.value) / soundSpeed;
+        const sourceX = startX + sourceSpeed * elapsed;
+
+        context.strokeStyle = '#ffffff12';
+        context.lineWidth = 1;
+        for (let gridX = 0; gridX < width; gridX += 42) {
+          context.beginPath(); context.moveTo(gridX, 0); context.lineTo(gridX, height); context.stroke();
+        }
+        for (let gridY = 20; gridY < height; gridY += 42) {
+          context.beginPath(); context.moveTo(0, gridY); context.lineTo(width, gridY); context.stroke();
+        }
+
+        context.strokeStyle = '#dce9df31';
+        context.setLineDash([3, 6]);
+        context.beginPath(); context.moveTo(24, baseline); context.lineTo(width - 24, baseline); context.stroke();
+        context.setLineDash([]);
+
+        for (const wave of waves) {
+          const radius = wave.age * visualWaveSpeed;
+          if (radius < 2 || radius > Math.max(width, height) * 1.3) continue;
+          context.beginPath();
+          context.arc(wave.x, baseline, radius, 0, Math.PI * 2);
+          context.strokeStyle = `rgba(114, 217, 192, ${Math.max(0.12, 0.8 - radius / (Math.max(width, height) * 1.35))})`;
+          context.lineWidth = 1.5;
+          context.stroke();
+        }
+
+        if (sourceSpeed > visualWaveSpeed) {
+          const halfAngle = Math.asin(visualWaveSpeed / sourceSpeed);
+          const shockLength = width * 1.2;
+          context.beginPath();
+          context.moveTo(sourceX, baseline);
+          context.lineTo(sourceX - shockLength * Math.cos(halfAngle), baseline - shockLength * Math.sin(halfAngle));
+          context.moveTo(sourceX, baseline);
+          context.lineTo(sourceX - shockLength * Math.cos(halfAngle), baseline + shockLength * Math.sin(halfAngle));
+          context.strokeStyle = '#f1835b';
+          context.lineWidth = 2;
+          context.setLineDash([7, 5]);
+          context.stroke();
+          context.setLineDash([]);
+        }
+
+        if (sourceX < width + 14) {
+          context.beginPath(); context.arc(sourceX, baseline, 8, 0, Math.PI * 2);
+          context.fillStyle = '#f1835b'; context.fill();
+          context.beginPath(); context.arc(sourceX, baseline, 13, 0, Math.PI * 2);
+          context.strokeStyle = '#f1835b70'; context.lineWidth = 1; context.stroke();
+          context.fillStyle = '#f5c0aa'; context.font = '11px sans-serif';
+          context.fillText('波源', Math.min(sourceX - 12, width - 46), baseline + 29);
+        }
+
+        const progress = Math.min(1, Math.max(0, (sourceX - startX) / travel));
+        context.fillStyle = '#b7c8bc'; context.font = '10px sans-serif';
+        context.fillText('左', 22, height - 20);
+        context.fillText('右', width - 28, height - 20);
+        context.strokeStyle = '#f1835b'; context.lineWidth = 2;
+        context.beginPath(); context.moveTo(44, height - 23); context.lineTo(44 + (width - 88) * progress, height - 23); context.stroke();
+
+        if (sourceX > startX + travel) {
+          elapsed = 0;
+          emissionAccumulator = 0;
+          waves = [];
+        }
+      }
+
+      function animate(timestamp) {
+        if (!running) return;
+        if (lastFrame) {
+          const delta = Math.min((timestamp - lastFrame) / 1000, 0.05);
+          elapsed += delta;
+          emissionAccumulator += delta;
+          const period = 1 / Number(frequencyInput.value);
+          while (emissionAccumulator >= period) {
+            const emissionTime = elapsed - emissionAccumulator + period;
+            waves.push({ x: width * 0.14 + visualWaveSpeed * Number(speedInput.value) / soundSpeed * emissionTime, age: 0 });
+            emissionAccumulator -= period;
+          }
+          for (const wave of waves) wave.age += delta;
+          waves = waves.filter(wave => wave.age < 4.5);
+        }
+        lastFrame = timestamp;
+        draw();
+        requestAnimationFrame(animate);
+      }
+
+      function start() {
+        if (running) return;
+        running = true;
+        lastFrame = 0;
+        status.textContent = '波源が移動中';
+        toggleButton.setAttribute('aria-pressed', 'true');
+        toggleButton.innerHTML = '<span class="play-icon" aria-hidden="true">Ⅱ</span><span>一時停止</span>';
+        requestAnimationFrame(animate);
+      }
+
+      function updateObserverReadouts() {
+        const observerSpeed = Number(observerSpeedInput.value);
+        const sourceFrequency = Number(observerFrequencyInput.value);
+        observerSpeedNumber.value = String(observerSpeed);
+        observerSpeedRatio.value = `音速の${(observerSpeed / soundSpeed * 100).toFixed(1).replace(/\.0$/, '')}%`;
+        observerFrequencyOutput.value = `${sourceFrequency.toFixed(1)} Hz`;
+        observerRateOutput.textContent = `${(sourceFrequency * (soundSpeed + observerSpeed) / soundSpeed).toFixed(1)} Hz`;
+      }
+
+      function resizeObserverCanvas() {
+        const bounds = observerCanvas.getBoundingClientRect();
+        if (!bounds.width || !bounds.height) return;
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        observerWidth = bounds.width;
+        observerHeight = bounds.height;
+        observerCanvas.width = Math.round(observerWidth * pixelRatio);
+        observerCanvas.height = Math.round(observerHeight * pixelRatio);
+        observerContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        drawObserver(performance.now());
+      }
+
+      function resetObserverSampling() {
+        observerLastCycle = null;
+        observerPreviousCycle = null;
+        observerWindowElapsed = 0;
+      }
+
+      function drawObserver(timestamp) {
+        if (!observerWidth || !observerHeight) return;
+        observerContext.clearRect(0, 0, observerWidth, observerHeight);
+        const sourceX = observerWidth * 0.13;
+        const initialObserverX = observerWidth * 0.84;
+        const observerStopX = sourceX + 28;
+        const baseline = observerHeight * 0.56;
+        const amplitude = Math.min(35, observerHeight * 0.12);
+        const sourceFrequency = Number(observerFrequencyInput.value);
+        const observerSpeed = Number(observerSpeedInput.value);
+        const visualObserverSpeed = visualWaveSpeed * observerSpeed / soundSpeed;
+        const travelTime = visualObserverSpeed > 0 ? (initialObserverX - observerStopX) / visualObserverSpeed : Infinity;
+        const observerX = initialObserverX - Math.min(initialObserverX - observerStopX, observerElapsed * visualObserverSpeed);
+
+        observerContext.strokeStyle = '#ffffff12';
+        observerContext.lineWidth = 1;
+        for (let gridX = 0; gridX < observerWidth; gridX += 42) {
+          observerContext.beginPath(); observerContext.moveTo(gridX, 0); observerContext.lineTo(gridX, observerHeight); observerContext.stroke();
+        }
+        for (let gridY = 20; gridY < observerHeight; gridY += 42) {
+          observerContext.beginPath(); observerContext.moveTo(0, gridY); observerContext.lineTo(observerWidth, gridY); observerContext.stroke();
+        }
+
+        observerContext.strokeStyle = '#dce9df45';
+        observerContext.setLineDash([3, 6]);
+        observerContext.beginPath(); observerContext.moveTo(sourceX, baseline); observerContext.lineTo(observerWidth - 24, baseline); observerContext.stroke();
+        observerContext.setLineDash([]);
+
+        observerContext.beginPath();
+        for (let x = sourceX; x <= observerWidth - 20; x += 2) {
+          const phase = sourceFrequency * (observerElapsed - (x - sourceX) / visualWaveSpeed);
+          const y = baseline - Math.cos(phase * Math.PI * 2) * amplitude;
+          if (x === sourceX) observerContext.moveTo(x, y);
+          else observerContext.lineTo(x, y);
+        }
+        observerContext.strokeStyle = '#72d9c0';
+        observerContext.lineWidth = 2;
+        observerContext.stroke();
+
+        const latestCrest = Math.floor(observerElapsed * sourceFrequency);
+        for (let crest = latestCrest; ; crest--) {
+          const crestX = sourceX + visualWaveSpeed * (observerElapsed - crest / sourceFrequency);
+          if (crestX > observerWidth - 20) break;
+          if (crestX >= sourceX) {
+            observerContext.beginPath();
+            observerContext.moveTo(crestX, baseline - amplitude - 5);
+            observerContext.lineTo(crestX, baseline + amplitude + 5);
+            observerContext.strokeStyle = '#72d9c080';
+            observerContext.lineWidth = 1;
+            observerContext.stroke();
+          }
+        }
+
+        observerContext.fillStyle = '#f1835b';
+        observerContext.fillRect(sourceX - 27, baseline - 10, 12, 20);
+        observerContext.beginPath();
+        observerContext.moveTo(sourceX - 15, baseline - 13);
+        observerContext.lineTo(sourceX, baseline - 21);
+        observerContext.lineTo(sourceX, baseline + 21);
+        observerContext.lineTo(sourceX - 15, baseline + 13);
+        observerContext.closePath();
+        observerContext.fill();
+        observerContext.fillStyle = '#f5c0aa'; observerContext.font = '11px sans-serif';
+        observerContext.fillText('スピーカー', Math.max(6, sourceX - 22), baseline + 30);
+
+        const personColor = '#ffffff';
+        observerContext.strokeStyle = personColor;
+        observerContext.fillStyle = personColor;
+        observerContext.lineWidth = 3;
+        observerContext.lineCap = 'round';
+        observerContext.beginPath(); observerContext.arc(observerX, baseline - 32, 5, 0, Math.PI * 2); observerContext.fill();
+        observerContext.beginPath();
+        observerContext.moveTo(observerX, baseline - 26); observerContext.lineTo(observerX - 2, baseline - 9);
+        observerContext.moveTo(observerX - 1, baseline - 21); observerContext.lineTo(observerX - 10, baseline - 15);
+        observerContext.moveTo(observerX - 1, baseline - 21); observerContext.lineTo(observerX + 7, baseline - 15);
+        observerContext.moveTo(observerX - 2, baseline - 9); observerContext.lineTo(observerX - 9, baseline + 6);
+        observerContext.moveTo(observerX - 2, baseline - 9); observerContext.lineTo(observerX + 6, baseline + 6);
+        observerContext.stroke();
+        observerContext.lineCap = 'butt';
+        observerContext.fillStyle = '#f1dfae'; observerContext.font = '11px sans-serif';
+        observerContext.fillText('観測者', Math.min(observerX - 20, observerWidth - 62), baseline + 30);
+
+        observerContext.fillStyle = '#b7c8bc'; observerContext.font = '10px sans-serif';
+        observerContext.fillText('波源', 22, observerHeight - 20);
+        observerContext.fillText('右', observerWidth - 28, observerHeight - 20);
+        observerContext.strokeStyle = '#f4cf79'; observerContext.lineWidth = 2;
+        observerContext.beginPath(); observerContext.moveTo(observerWidth - 48, observerHeight - 23); observerContext.lineTo(observerX, observerHeight - 23); observerContext.stroke();
+      }
+
+      function animateObserver(timestamp) {
+        if (!observerPanel.hidden && observerRunning) {
+          if (observerLastFrame) {
+            const delta = Math.min((timestamp - observerLastFrame) / 1000, 0.05) * (observerSlowMotion.checked ? 0.2 : 1);
+            observerElapsed += delta;
+            const sourceX = observerWidth * 0.13;
+            const initialObserverX = observerWidth * 0.84;
+            const observerStopX = sourceX + 28;
+            const visualObserverSpeed = visualWaveSpeed * Number(observerSpeedInput.value) / soundSpeed;
+            const travelTime = visualObserverSpeed > 0 ? (initialObserverX - observerStopX) / visualObserverSpeed : Infinity;
+            if (observerElapsed >= travelTime) {
+              observerElapsed = 0;
+              resetObserverSampling();
+            }
+
+            const observerX = initialObserverX - Math.min(initialObserverX - observerStopX, observerElapsed * visualObserverSpeed);
+            const currentCycle = Number(observerFrequencyInput.value) * (observerElapsed - (observerX - sourceX) / visualWaveSpeed);
+            if (observerPreviousCycle !== null) {
+              const crossedWaves = Math.floor(currentCycle) - Math.floor(observerPreviousCycle);
+              if (crossedWaves > 0) {
+              }
+            }
+            observerPreviousCycle = currentCycle;
+            if (observerLastCycle === null) observerLastCycle = currentCycle;
+            observerWindowElapsed += delta;
+            if (observerWindowElapsed >= 1) {
+              const receivedPerSecond = Math.max(0, (currentCycle - observerLastCycle) / observerWindowElapsed);
+              observerCount.textContent = `${receivedPerSecond.toFixed(1)} 個`;
+              observerLastCycle = currentCycle;
+              observerWindowElapsed = 0;
+            }
+          }
+          observerLastFrame = timestamp;
+          drawObserver(timestamp);
+        } else observerLastFrame = 0;
+        requestAnimationFrame(animateObserver);
+      }
+
+      function updateLightReadouts() {
+        const velocity = Number(lightSpeedInput.value);
+        const beta = velocity / speedOfLight;
+        const wavelength = 550 * Math.sqrt((1 + beta) / (1 - beta));
+        const strength = Math.min(1, Math.abs(beta) / 0.3);
+        const tint = velocity < 0 ? [72, 166, 255] : [255, 82, 82];
+        const color = velocity === 0 ? 'rgb(255, 255, 255)' : `rgb(${tint.map(channel => Math.round(255 + (channel - 255) * strength)).join(', ')})`;
+
+        lightSpeedNumber.value = String(velocity);
+        lightSpeedOutput.value = `${velocity > 0 ? '+' : ''}${velocity.toLocaleString('en-US')} km/s`;
+        lightWavelength.textContent = `${wavelength.toFixed(1)} nm`;
+        lightWavelengthFormula.textContent = `${wavelength.toFixed(1)} nm`;
+        lightColorSwatch.style.backgroundColor = color;
+        lightShiftLabel.textContent = velocity < 0 ? '青方偏移・接近' : velocity > 0 ? '赤方偏移・後退' : '静止・白色';
+        lightMotionLabel.textContent = velocity < 0 ? '恒星が地球へ接近' : velocity > 0 ? '恒星が地球から遠ざかる' : '恒星は静止';
+        lightCanvas.setAttribute('aria-label', `右側の恒星から左側の地球へ進む${lightShiftLabel.textContent}の光。観測波長${wavelength.toFixed(1)} nm`);
+        drawLight(performance.now());
+      }
+
+      function resizeLightCanvas() {
+        const bounds = lightCanvas.getBoundingClientRect();
+        if (!bounds.width || !bounds.height) return;
+        const previousWidth = lightWidth;
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        lightWidth = bounds.width;
+        lightHeight = bounds.height;
+        lightCanvas.width = Math.round(lightWidth * pixelRatio);
+        lightCanvas.height = Math.round(lightHeight * pixelRatio);
+        lightContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        if (previousWidth === 0 || lightStarX === null) resetLightWaveTrain();
+        else {
+          const scale = lightWidth / previousWidth;
+          lightStarX *= scale;
+          lightCrests.forEach(crest => { crest.x *= scale; });
+        }
+        drawLight(performance.now());
+      }
+
+      function resetLightWaveTrain() {
+        if (!lightWidth) return;
+        lightStarX = lightWidth * 0.82;
+        lightSourcePhase = 0;
+        const earthX = lightWidth * 0.16;
+        const earthRadius = Math.min(24, lightHeight * 0.075);
+        const waveStart = earthX + earthRadius + 12;
+        const restWavelength = (lightStarX - 24 - waveStart) / 5.5;
+        const color = lightColorSwatch.style.backgroundColor || 'rgb(255, 255, 255)';
+        lightCrests = Array.from({ length: 7 }, (_, index) => ({
+          x: lightStarX - 24 - index * restWavelength,
+          color
+        }));
+      }
+
+      function drawLight(timestamp) {
+        if (!lightWidth || !lightHeight) return;
+        lightContext.clearRect(0, 0, lightWidth, lightHeight);
+        const earthX = lightWidth * 0.16;
+        const starX = lightStarX ?? lightWidth * 0.82;
+        const baseline = lightHeight * 0.56;
+        const earthRadius = Math.min(24, lightHeight * 0.075);
+        const velocity = Number(lightSpeedInput.value);
+        const beta = velocity / speedOfLight;
+        const color = lightColorSwatch.style.backgroundColor || 'rgb(255, 255, 255)';
+        const waveStart = earthX + earthRadius + 12;
+        const waveEnd = starX - 24;
+        const amplitude = Math.min(30, lightHeight * 0.1);
+
+        lightContext.strokeStyle = '#ffffff12';
+        lightContext.lineWidth = 1;
+        for (let gridX = 0; gridX < lightWidth; gridX += 42) {
+          lightContext.beginPath(); lightContext.moveTo(gridX, 0); lightContext.lineTo(gridX, lightHeight); lightContext.stroke();
+        }
+        for (let gridY = 20; gridY < lightHeight; gridY += 42) {
+          lightContext.beginPath(); lightContext.moveTo(0, gridY); lightContext.lineTo(lightWidth, gridY); lightContext.stroke();
+        }
+
+        const crests = lightCrests.filter(crest => crest.x > waveStart - 120 && crest.x < waveEnd + 120).sort((a, b) => a.x - b.x);
+        const drawWaveSegment = (leftCrest, rightCrest, segmentStart, segmentEnd) => {
+          const wavelength = rightCrest.x - leftCrest.x;
+          if (wavelength <= 0 || segmentEnd <= segmentStart) return;
+          lightContext.beginPath();
+          for (let x = segmentStart; x <= segmentEnd; x += 2) {
+            const phase = 2 * Math.PI * (x - leftCrest.x) / wavelength;
+            const y = baseline - Math.cos(phase) * amplitude;
+            if (x === segmentStart) lightContext.moveTo(x, y);
+            else lightContext.lineTo(x, y);
+          }
+          lightContext.strokeStyle = rightCrest.color;
+          lightContext.lineWidth = 2.5;
+          lightContext.shadowColor = rightCrest.color;
+          lightContext.shadowBlur = 9;
+          lightContext.stroke();
+          lightContext.shadowBlur = 0;
+        };
+        if (crests.length > 1) {
+          drawWaveSegment(crests[0], crests[1], waveStart, Math.min(waveEnd, crests[0].x));
+          for (let index = 0; index < crests.length - 1; index++) {
+            drawWaveSegment(crests[index], crests[index + 1], Math.max(waveStart, crests[index].x), Math.min(waveEnd, crests[index + 1].x));
+          }
+          const last = crests.length - 1;
+          drawWaveSegment(crests[last - 1], crests[last], Math.max(waveStart, crests[last].x), waveEnd);
+        }
+
+        lightContext.beginPath(); lightContext.arc(earthX, baseline, earthRadius, 0, Math.PI * 2);
+        lightContext.fillStyle = '#276c83'; lightContext.fill();
+        lightContext.save();
+        lightContext.beginPath(); lightContext.arc(earthX, baseline, earthRadius - 1, 0, Math.PI * 2); lightContext.clip();
+        lightContext.fillStyle = '#72ad75';
+        lightContext.beginPath();
+        lightContext.moveTo(earthX - 18, baseline - 7); lightContext.lineTo(earthX - 9, baseline - 17);
+        lightContext.lineTo(earthX - 1, baseline - 12); lightContext.lineTo(earthX + 3, baseline - 3);
+        lightContext.lineTo(earthX - 4, baseline + 1); lightContext.lineTo(earthX - 5, baseline + 13);
+        lightContext.lineTo(earthX - 14, baseline + 10); lightContext.closePath(); lightContext.fill();
+        lightContext.beginPath();
+        lightContext.moveTo(earthX + 6, baseline - 19); lightContext.lineTo(earthX + 17, baseline - 12);
+        lightContext.lineTo(earthX + 13, baseline - 3); lightContext.lineTo(earthX + 19, baseline + 4);
+        lightContext.lineTo(earthX + 10, baseline + 14); lightContext.lineTo(earthX + 3, baseline + 8);
+        lightContext.lineTo(earthX + 5, baseline - 2); lightContext.closePath(); lightContext.fill();
+        lightContext.restore();
+        lightContext.beginPath(); lightContext.arc(earthX, baseline, earthRadius, 0, Math.PI * 2);
+        lightContext.strokeStyle = '#a6d6c8'; lightContext.lineWidth = 1.5; lightContext.stroke();
+        lightContext.fillStyle = '#d4e1d9'; lightContext.font = '11px sans-serif';
+        lightContext.fillText('地球', earthX - 12, baseline + earthRadius + 20);
+
+        lightContext.save();
+        lightContext.shadowColor = color; lightContext.shadowBlur = 16;
+        lightContext.beginPath();
+        lightContext.moveTo(starX, baseline - 16); lightContext.lineTo(starX + 5, baseline - 5);
+        lightContext.lineTo(starX + 16, baseline); lightContext.lineTo(starX + 5, baseline + 5);
+        lightContext.lineTo(starX, baseline + 16); lightContext.lineTo(starX - 5, baseline + 5);
+        lightContext.lineTo(starX - 16, baseline); lightContext.lineTo(starX - 5, baseline - 5);
+        lightContext.closePath(); lightContext.fillStyle = '#fff'; lightContext.fill();
+        lightContext.restore();
+        lightContext.fillStyle = '#d4e1d9'; lightContext.font = '11px sans-serif';
+        lightContext.fillText('恒星', starX - 13, baseline + 34);
+
+        if (velocity !== 0) {
+          const direction = Math.sign(velocity);
+          const arrowY = baseline - 34;
+          const arrowEnd = starX + direction * 40;
+          lightContext.strokeStyle = '#f4cf79'; lightContext.fillStyle = '#f4cf79'; lightContext.lineWidth = 2;
+          lightContext.beginPath(); lightContext.moveTo(starX - direction * 40, arrowY); lightContext.lineTo(arrowEnd, arrowY); lightContext.stroke();
+          lightContext.beginPath(); lightContext.moveTo(arrowEnd, arrowY); lightContext.lineTo(arrowEnd - direction * 7, arrowY - 4);
+          lightContext.lineTo(arrowEnd - direction * 7, arrowY + 4); lightContext.closePath(); lightContext.fill();
+        }
+        lightContext.fillStyle = '#b7c8bc'; lightContext.font = '10px sans-serif';
+        lightContext.fillText('光の波が届く方向', waveStart, lightHeight - 19);
+      }
+
+      function animateLight(timestamp) {
+        if (!lightPanel.hidden && lightRunning) {
+          if (lightLastFrame) {
+            const delta = Math.min((timestamp - lightLastFrame) / 1000, 0.05);
+            const velocity = Number(lightSpeedInput.value);
+            const beta = velocity / speedOfLight;
+            const gamma = 1 / Math.sqrt(1 - beta * beta);
+            const earthX = lightWidth * 0.16;
+            const earthRadius = Math.min(24, lightHeight * 0.075);
+            const waveStart = earthX + earthRadius + 12;
+            const restWavelength = (lightWidth * 0.82 - 24 - waveStart) / 5.5;
+            lightStarX += beta * visualLightSpeed * delta;
+            lightCrests.forEach(crest => { crest.x -= visualLightSpeed * delta; });
+            lightCrests = lightCrests.filter(crest => crest.x > earthX - earthRadius - 20);
+            lightSourcePhase += delta / (gamma * restWavelength / visualLightSpeed);
+            while (lightSourcePhase >= 1) {
+              lightCrests.push({ x: lightStarX - 24, color: lightColorSwatch.style.backgroundColor });
+              lightSourcePhase -= 1;
+            }
+          }
+          lightLastFrame = timestamp;
+          drawLight(timestamp);
+        } else lightLastFrame = 0;
+        requestAnimationFrame(animateLight);
+      }
+
+      toggleButton.addEventListener('click', () => {
+        if (running) {
+          running = false;
+          status.textContent = '一時停止中';
+          toggleButton.setAttribute('aria-pressed', 'false');
+          toggleButton.innerHTML = '<span class="play-icon" aria-hidden="true">▶</span><span>再生</span>';
+        } else start();
+      });
+      resetButton.addEventListener('click', () => {
+        speedInput.value = '119';
+        frequencyInput.value = '2';
+        elapsed = 0;
+        emissionAccumulator = 0;
+        lastFrame = 0;
+        waves = [];
+        updateReadouts();
+        draw();
+      });
+      speedInput.addEventListener('input', updateReadouts);
+      speedNumberInput.addEventListener('input', () => {
+        if (speedNumberInput.value === '') return;
+        const sourceSpeed = Math.min(Number(speedInput.max), Math.max(0, Number(speedNumberInput.value)));
+        speedInput.value = String(sourceSpeed);
+        updateReadouts();
+      });
+      speedNumberInput.addEventListener('change', () => {
+        const sourceSpeed = Math.min(Number(speedInput.max), Math.max(0, Number(speedNumberInput.value) || 0));
+        speedInput.value = String(sourceSpeed);
+        updateReadouts();
+      });
+      frequencyInput.addEventListener('input', () => {
+        emissionAccumulator = 0;
+        updateReadouts();
+      });
+      observerSpeedInput.addEventListener('input', () => {
+        observerSpeedNumber.value = observerSpeedInput.value;
+        resetObserverSampling();
+        updateObserverReadouts();
+      });
+      observerSpeedNumber.addEventListener('input', () => {
+        if (observerSpeedNumber.value === '') return;
+        observerSpeedInput.value = String(Math.min(Number(observerSpeedInput.max), Math.max(0, Number(observerSpeedNumber.value))));
+        resetObserverSampling();
+        updateObserverReadouts();
+      });
+      observerSpeedNumber.addEventListener('change', () => {
+        observerSpeedInput.value = String(Math.min(Number(observerSpeedInput.max), Math.max(0, Number(observerSpeedNumber.value) || 0)));
+        resetObserverSampling();
+        updateObserverReadouts();
+      });
+      observerFrequencyInput.addEventListener('input', () => {
+        resetObserverSampling();
+        updateObserverReadouts();
+      });
+      observerReset.addEventListener('click', () => {
+        observerSpeedInput.value = '119';
+        observerFrequencyInput.value = '2';
+        observerElapsed = 0;
+        resetObserverSampling();
+        observerCount.textContent = '0.0 個';
+        updateObserverReadouts();
+        drawObserver(performance.now());
+      });
+      observerToggle.addEventListener('click', () => {
+        observerRunning = !observerRunning;
+        observerLastFrame = 0;
+        observerClockHand.style.animationPlayState = observerRunning ? 'running' : 'paused';
+        observerToggle.setAttribute('aria-pressed', String(observerRunning));
+        observerToggle.innerHTML = observerRunning ? '<span class="play-icon" aria-hidden="true">Ⅱ</span><span>一時停止</span>' : '<span class="play-icon" aria-hidden="true">▶</span><span>再生</span>';
+      });
+      observerSlowMotion.addEventListener('change', () => {
+        observerClockHand.style.animationDuration = observerSlowMotion.checked ? '5s' : '1s';
+        observerClock.setAttribute('aria-label', observerSlowMotion.checked ? 'スローモーションの1秒で1周する時計' : '1秒で1周する時計');
+        observerLastFrame = 0;
+        resetObserverSampling();
+      });
+      lightSpeedInput.addEventListener('input', () => {
+        lightSpeedNumber.value = lightSpeedInput.value;
+        updateLightReadouts();
+      });
+      lightSpeedNumber.addEventListener('input', () => {
+        if (lightSpeedNumber.value === '') return;
+        lightSpeedInput.value = String(Math.min(Number(lightSpeedInput.max), Math.max(Number(lightSpeedInput.min), Number(lightSpeedNumber.value))));
+        updateLightReadouts();
+      });
+      lightSpeedNumber.addEventListener('change', () => {
+        lightSpeedInput.value = String(Math.min(Number(lightSpeedInput.max), Math.max(Number(lightSpeedInput.min), Number(lightSpeedNumber.value) || 0)));
+        updateLightReadouts();
+      });
+      lightReset.addEventListener('click', () => {
+        lightSpeedInput.value = '0';
+        updateLightReadouts();
+        resetLightWaveTrain();
+        drawLight(performance.now());
+      });
+      lightToggle.addEventListener('click', () => {
+        lightRunning = !lightRunning;
+        lightLastFrame = 0;
+        lightToggle.setAttribute('aria-pressed', String(lightRunning));
+        lightToggle.innerHTML = lightRunning ? '<span class="play-icon" aria-hidden="true">Ⅱ</span><span>一時停止</span>' : '<span class="play-icon" aria-hidden="true">▶</span><span>再生</span>';
+      });
+      window.addEventListener('resize', () => {
+        resizeCanvas();
+        resizeObserverCanvas();
+        resizeLightCanvas();
+      });
+
+      const tabs = [...document.querySelectorAll('[role="tab"]')];
+      tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => selectTab(index));
+        tab.addEventListener('keydown', event => {
+          if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+            event.preventDefault();
+            const offset = event.key === 'ArrowRight' ? 1 : -1;
+            selectTab((index + offset + tabs.length) % tabs.length);
+            tabs[(index + offset + tabs.length) % tabs.length].focus();
+          }
+        });
+      });
+
+      function selectTab(index) {
+        tabs.forEach((tab, tabIndex) => {
+          const selected = tabIndex === index;
+          tab.setAttribute('aria-selected', String(selected));
+          tab.tabIndex = selected ? 0 : -1;
+          document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
+        });
+        document.querySelectorAll('.coming-soon').forEach(panel => panel.classList.remove('visible'));
+        const placeholder = document.querySelector(`#${tabs[index].getAttribute('aria-controls')} .coming-soon`);
+        if (placeholder) placeholder.classList.add('visible');
+        if (index === 1) {
+          observerLastFrame = 0;
+          resetObserverSampling();
+          resizeObserverCanvas();
+        }
+        if (index === 2) {
+          lightLastFrame = 0;
+          resizeLightCanvas();
+        }
+      }
+
+      updateReadouts();
+      updateObserverReadouts();
+      updateLightReadouts();
+      resizeCanvas();
+      resizeLightCanvas();
+      requestAnimationFrame(animate);
+      requestAnimationFrame(animateObserver);
+      requestAnimationFrame(animateLight);
+    })();
+  </script>
+</body>
+</html>
